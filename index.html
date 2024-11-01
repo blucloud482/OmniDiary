@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omni Diary</title>
+    <style>
+        /* Basic Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            transition: background-color 0.3s, color 0.3s;
+            background-size: cover;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: transparent;
+        }
+        h1 {
+            text-align: center;
+        }
+        #entry {
+            width: 100%;
+            min-height: 100px; /* Set to 100px for a shorter box */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            resize: vertical;
+            overflow-y: auto;
+            color: black;
+        }
+        #entry:focus {
+            outline: none;
+        }
+        .dark-mode #entry {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .options {
+            display: none;
+            margin-top: 10px;
+        }
+        .dark-mode {
+            background-color: #333;
+            color: white;
+        }
+        #history {
+            margin-top: 20px;
+        }
+        .entry-log {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .edit-button, .save-button, .delete-button {
+            display: inline-block;
+            margin: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+            color: #ffffff;
+            border-radius: 5px;
+            border: none;
+        }
+        .delete-button {
+            background-color: #ff4d4d;
+        }
+        .edit-entry {
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            padding: 5px;
+            color: black;
+            resize: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 style="text-align: center;">Omni Diary</h1>
+
+    <div id="entry" contenteditable="true" placeholder="Write your thoughts..."></div>
+
+    <button onclick="toggleOptions()">Options</button>
+    <div id="options" class="options">
+        <label>Background Color:</label>
+        <input type="color" id="backgroundColor" onchange="changeBackgroundColor()" />
+        <label>Upload Background Image:</label>
+        <input type="file" id="backgroundImageInput" accept="image/*" onchange="setBackgroundImage()" />
+       
+        <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+        <label>Text Color:</label>
+        <input type="color" id="textColor" onchange="changeTextColor()" />
+        <label>Button Color:</label>
+        <input type="color" id="buttonColor" onchange="changeButtonColor()" />
+    </div>
+
+    <button onclick="saveDiary()">Save Entry</button>
+    <button onclick="resetPassword()">Reset Password</button>
+
+    <div id="history">
+        <h3>History</h3>
+        <div id="entryHistory"></div>
+    </div>
+</div>
+
+<script>
+    const maxCharacters = 1000000000;  // Updated character limit
+    let passwordSet = localStorage.getItem('diaryPassword');
+    let darkMode = localStorage.getItem('darkMode') === 'true';
+
+    if (!passwordSet) {
+        setPassword();
+    } else {
+        verifyPassword();
+    }
+
+    function setPassword() {
+        const newPassword = prompt("Create a new password for your diary:");
+        if (newPassword) {
+            localStorage.setItem('diaryPassword', newPassword);
+            alert("Password set successfully.");
+        } else {
+            alert("Password is required to use the diary.");
+            setPassword();
+        }
+    }
+
+    function verifyPassword() {
+        const enteredPassword = prompt("Enter your password:");
+        if (enteredPassword === localStorage.getItem('diaryPassword')) {
+            alert("Access granted.");
+            loadSettings(); // Load all saved settings upon successful login
+        } else {
+            alert("Incorrect password. Try again in 5 minutes.");
+            setTimeout(() => { location.reload(); }, 300000);
+        }
+    }
+
+    function resetPassword() {
+        const oldPassword = prompt("Enter your current password to reset:");
+        if (oldPassword === localStorage.getItem('diaryPassword')) {
+            const newPassword = prompt("Enter a new password:");
+            if (newPassword) {
+                localStorage.setItem('diaryPassword', newPassword);
+                alert("Password reset successfully.");
+            } else {
+                alert("Password reset canceled.");
+            }
+        } else {
+            alert("Incorrect password. Cannot reset.");
+        }
+    }
+
+    function toggleOptions() {
+        const options = document.getElementById('options');
+        options.style.display = options.style.display === 'none' || options.style.display === '' ? 'block' : 'none';
+    }
+
+    function changeBackgroundColor() {
+        const backgroundColor = document.getElementById('backgroundColor').value;
+        document.body.style.backgroundColor = backgroundColor;
+        localStorage.setItem('backgroundColor', backgroundColor);
+    }
+
+    function setBackgroundImage() {
+        const file = document.getElementById('backgroundImageInput').files[0];
+        const reader = new FileReader();
+       
+        reader.onload = function(event) {
+            document.body.style.backgroundImage = `url(${event.target.result})`;
+            localStorage.setItem('backgroundImage', event.target.result);
+        };
+       
+        if (file) {
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function changeTextColor() {
+        const textColor = document.getElementById('textColor').value;
+        document.getElementById('entry').style.color = textColor;
+        localStorage.setItem('textColor', textColor);
+    }
+
+    function changeButtonColor() {
+        const buttonColor = document.getElementById('buttonColor').value;
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.style.backgroundColor = buttonColor;
+        });
+        localStorage.setItem('buttonColor', buttonColor);
+    }
+
+    function toggleDarkMode() {
+        darkMode = !darkMode;
+        document.body.classList.toggle('dark-mode', darkMode);
+        localStorage.setItem('darkMode', darkMode);
+    }
+
+    function saveDiary() {
+        const content = document.getElementById('entry').innerHTML;
+        const timestamp = new Date().toLocaleString();
+        const entryLog = { content, timestamp };
+
+        const history = JSON.parse(localStorage.getItem('diaryHistory')) || [];
+        history.push(entryLog);
+        localStorage.setItem('diaryHistory', JSON.stringify(history));
+
+        alert("Diary entry saved.");
+        loadHistory();
+    }
+
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('diaryHistory')) || [];
+        const entryHistoryDiv = document.getElementById('entryHistory');
+        entryHistoryDiv.innerHTML = '';
+
+        history.forEach((entry, index) => {
+            const entryDiv = document.createElement('div');
+            entryDiv.classList.add('entry-log');
+            entryDiv.innerHTML = `
+                <strong>${entry.timestamp}</strong>
+                <textarea class="edit-entry" id="editEntry-${index}">${entry.content}</textarea>
+                <button class="save-button" onclick="saveEditedEntry(${index})">Save</button>
+                <button class="delete-button" onclick="deleteEntry(${index})">Delete</button>
+            `;
+            entryHistoryDiv.appendChild(entryDiv);
+        });
+    }
+
+    function saveEditedEntry(index) {
+        const editedContent = document.getElementById(`editEntry-${index}`).value;
+        const history = JSON.parse(localStorage.getItem('diaryHistory')) || [];
+
+        if (history[index]) {
+            history[index].content = editedContent;
+            localStorage.setItem('diaryHistory', JSON.stringify(history));
+            alert("Entry updated.");
+            loadHistory();
+        }
+    }
+
+    function deleteEntry(index) {
+        const history = JSON.parse(localStorage.getItem('diaryHistory')) || [];
+       
+        if (history[index]) {
+            history.splice(index, 1);
+            localStorage.setItem('diaryHistory', JSON.stringify(history));
+            alert("Entry deleted.");
+            loadHistory();
+        }
+    }
+
+    function loadSettings() {
+        // Load background color
+        const savedBgColor = localStorage.getItem('backgroundColor');
+        if (savedBgColor) document.body.style.backgroundColor = savedBgColor;
+
+        // Load background image
+        const savedBgImage = localStorage.getItem('backgroundImage');
+        if (savedBgImage) document.body.style.backgroundImage = `url(${savedBgImage})`;
+
+        // Load text color
+        const savedTextColor = localStorage.getItem('textColor');
+        if (savedTextColor) document.getElementById('entry').style.color = savedTextColor;
+
+        // Load button color
+        const savedButtonColor = localStorage.getItem('buttonColor');
+        if (savedButtonColor) {
+            document.querySelectorAll('button').forEach(button => button.style.backgroundColor = savedButtonColor);
+        }
+
+        // Load dark mode
+        if (darkMode) document.body.classList.add('dark-mode');
+
+        // Load history
+        loadHistory();
+    }
+
+    window.onload = loadSettings;
+</script>
+</body>
+</html>
