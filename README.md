@@ -1,1 +1,1 @@
-www.omnidiary.com 
+https://blucloud482.github.io/OmniDiary/ 
